@@ -18,10 +18,10 @@ function Slider () {
 	}
 
 	this.body.addEventListener('mouseover', function(e) {
-		debugger;
-		if (e.X) {
+		// debugger;
+		// if (e.X) {
 
-		}
+		// }
 	});
 
 	return this.body;
@@ -29,7 +29,14 @@ function Slider () {
 
 function move (elem, pix) {
 	setTimeout(function() {
-		elem.style.left = pix-- + 'px';
+		var left = parseInt(elem.style.left) || 0;
+		if (pix > 0) {
+			elem.style.left = ++left + 'px';
+			pix--;
+		} else {
+			elem.style.left = --left + 'px';
+			pix++;
+		}
 		if (pix) { move(elem, pix); };
-	}, 10);
+	}, 5);
 }
