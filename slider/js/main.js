@@ -4,20 +4,34 @@ document.onreadystatechange = function () {
 	}
 }
 
-function Slider () {
-	this.images = ['1.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg'];
+function Slider (images) {
+	this.images = images || ['1.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg'];
 	this.current = 0;
 	this.body = document.createElement('div');
 	this.body.className = 'body';
-	this.body.style.width = (this.images.length * 100) + '%';
-	var self = this;
-
-	for (var i = 0; i < this.images.length; i++) {
-		var img = document.createElement('img');
-		img.src = 'img/' + this.images[i];
-		img.style.width = (100 / this.images.length) + '%';
-		img.style.left = i * (100 / this.images.length) + '%';
-		this.body.appendChild(img);
+	this.body.style.width = '300%';
+	this.animate = function (options) {
+		var start = performance.now();
+		requestAnimationFrame(function animate(time) {
+			var timeFraction = (time - start) / options.duration;
+			if (timeFraction > 1) {
+				timeFraction = 1;
+			}
+			var progress = options.timing(timeFraction)
+			options.draw(progress);
+			if (timeFraction < 1) {
+				requestAnimationFrame(animate);
+			}
+		});
+	}
+	this.updateimgs = function() {
+		for (var i = 0; i < 3; i++) {
+			var img = document.createElement('img');
+			img.src = 'img/' + this.images[this.current];
+			img.style.width = (100 / 3) + '%';
+			img.style.left = i * (100 / 3) + '%';
+			this.body.appendChild(img);
+		}
 	}
 
 	this.body.addEventListener('mouseover', function(e) {
@@ -26,62 +40,32 @@ function Slider () {
 
 		// }
 	});
+	var self = this;
 
 	setInterval(function() {
-		if (self.current < self.images.length) {
-			animate(function (timePassed) {
-				self.body.style.left = -timePassed + 'px';
-			}, 1000);
-			self.current++;
-		} else {
-			animate(function (timePassed) {
-				self.body.style.left = '0px';
-			}, 1000);
-			self.current = 0;
-		}
-	}, 5000);
-
-	function animate(draw, duration) {
-		var start = performance.now();
-		requestAnimationFrame(function animate(time) {
-			// определить, сколько прошло времени с начала анимации
-			var timePassed = time - start;
-			// возможно небольшое превышение времени, в этом случае зафиксировать конец
-			if (timePassed > duration) { timePassed = duration; };
-			// нарисовать состояние анимации в момент timePassed
-			draw(timePassed);
-			// если время анимации не закончилось - запланировать ещё кадр
-			if (timePassed < duration) {
-				requestAnimationFrame(animate);
+		var offset = parseInt(getComputedStyle(self.body.parentNode).width);
+		self.animate({
+			duration: 1000,
+			timing: makeEaseInOut(quad),
+			draw: function(progress) {
+				self.body.style.left = offset * progress + 'px';
 			}
 		});
+		self.current++;
+	}, 5000);
+
+	function quad (progress) {
+		return Math.pow(progress, 2);
 	}
 
-	function delta(progress) {
-		return 1 - sin((1 - progress) * П/2);
+	function makeEaseInOut(timing) {
+		return function(timeFraction) {
+			if (timeFraction < .5)
+				return timing(2 * timeFraction) / 2;
+			else
+				return (2 - timing(2 * (1 - timeFraction))) / 2;
+		}
 	}
 
-	// function draw (progress) {
-	// 	this.body.style.left = progress + 'px';
-	// }
-
-	// function move (elem, pix) {
-	// 	var timer = setInterval(function() {
-	// 		if (!pix) { clearInterval(timer); };
-	// 		var left = parseInt(elem.style.left) || 0;
-	// 		if (pix > 0) {
-	// 			elem.style.left = ++left + 'px';
-	// 			pix--;
-	// 		} else {
-	// 			elem.style.left = --left + 'px';
-	// 			pix++;
-	// 		}
-	// 	}, 5);
-	// }
-
-	// setInterval(function() {
-	// 	move(self.body, -850);
-	// }, 5000);
-	
 	return this.body;
 }
